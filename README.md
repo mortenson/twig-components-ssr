@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mortenson/twig-components-ssr.svg?branch=master)](https://travis-ci.org/mortenson/twig-components-ssr)
+
 # Twig Components Server Side Renderer
 
 This project provides a server side renderer for [Twig Components](https://github.com/mortenson/twig-components)
