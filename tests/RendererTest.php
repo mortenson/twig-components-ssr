@@ -24,7 +24,7 @@ class RendererTest extends TestCase
                     'my-component' => 'Hello {{ name }}!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" ssr="true">Hello World!</my-component>',
+                '<my-component name="World" data-ssr="true">Hello World!</my-component>',
             ],
             'nested' => [
                 [
@@ -32,14 +32,42 @@ class RendererTest extends TestCase
                     'my-name' => '<b>World</b>'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" ssr="true">Hello <my-name name="World" ssr="true"><b>World</b></my-name>!</my-component>',
+                '<my-component name="World" data-ssr="true">Hello <my-name name="World" data-ssr="true"><b>World</b></my-name>!</my-component>',
             ],
             'styles' => [
                 [
                     'my-component' => '<style>p { color: blue; }</style>Hello <p>{{ name }}</p>!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" ssr="true">Hello <p style="color: blue;">World</p>!</my-component>',
+                '<my-component name="World" data-ssr="true">Hello <p style="color: blue;">World</p>!</my-component>',
+            ],
+            'slot' => [
+                [
+                    'my-component' => '<slot></slot>'
+                ],
+                '<my-component><div class="foo">Hello World!</div></my-component>',
+                '<my-component data-ssr-content=\'"&lt;div class=\"foo\"&gt;Hello World!&lt;\/div&gt;"\' data-ssr="true"><div class="foo">Hello World!</div></my-component>',
+            ],
+            'slot_placeholder' => [
+                [
+                    'my-component' => '<slot>placeholder</slot>'
+                ],
+                '<my-component></my-component>',
+                '<my-component data-ssr="true">placeholder</my-component>',
+            ],
+            'slot_named' => [
+                [
+                    'my-component' => 'Hello <slot name="name"></slot>'
+                ],
+                '<my-component><span slot="name">World!</span></my-component>',
+                '<my-component data-ssr-content=\'"&lt;span slot=\"name\"&gt;World!&lt;\/span&gt;"\' data-ssr="true">Hello <span slot="name">World!</span></my-component>',
+            ],
+            'slot_complex' => [
+                [
+                    'my-component' => '<slot></slot><slot name="suffix"></slot><slot></slot><slot name="punctuation">!</slot>'
+                ],
+                '<my-component><div slot="suffix">, ya animal</div>Hello<p>World</p></my-component>',
+                '<my-component data-ssr-content=\'"&lt;div slot=\"suffix\"&gt;, ya animal&lt;\/div&gt;Hello&lt;p&gt;World&lt;\/p&gt;"\' data-ssr="true">Hello<p>World</p><div slot="suffix">, ya animal</div>!</my-component>',
             ],
         ];
     }

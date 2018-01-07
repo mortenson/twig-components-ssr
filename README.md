@@ -37,7 +37,7 @@ $rendered_html = $renderer->render($html);
 At this point, `$rendered_html` should contain:
 
 ```html
-<my-component name="World" ssr="true">Hello World!</my-component>
+<my-component name="World" data-ssr="true">Hello World!</my-component>
 ```
 
 When this HTML is displayed in a browser, and the Javascript for the Twig
@@ -72,4 +72,4 @@ phpcs --standard=PSR2 src/*
 
 # Todo
 
-- [ ] Support the `<slot />` element and named slots
+- [x] Support the `<slot />` element and named slots
