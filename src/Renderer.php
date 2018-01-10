@@ -49,12 +49,44 @@ class Renderer
      */
     public function render($html)
     {
+        $document = $this->createDocument($html);
+        $this->renderTwigComponents($document);
+        return trim($document->saveHTML());
+    }
+
+    /**
+     * Creates a DOMDocument from HTML.
+     *
+     * @param string $html
+     *   HTML to append to the DOMNode.
+     * @return \DOMDocument
+     *   The DOMDocument.
+     */
+    protected function createDocument($html)
+    {
         $document = new \DOMDocument();
         $document->formatOutput = false;
         $document->strictErrorChecking = false;
         @$document->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $this->renderTwigComponents($document, $document);
-        return trim($document->saveHTML());
+        return $document;
+    }
+
+    /**
+     * Appends arbitrary HTML to a given DOMNode.
+     *
+     * @param string $html
+     *   HTML to append to the DOMNode.
+     * @param \DOMNode &$node
+     *   The DOMNode
+     */
+    protected function appendHTML($html, &$node)
+    {
+        $html = '<wrapper>' . $html . '</wrapper>';
+        $tempDocument = $this->createDocument($html);
+        /** @var \DOMNode $child */
+        foreach ($tempDocument->firstChild->childNodes as $child) {
+            $node->appendChild($node->ownerDocument->importNode($child, true));
+        }
     }
 
     /**
@@ -62,10 +94,8 @@ class Renderer
      *
      * @param \DOMElement|\DOMDocument &$element
      *   The element to parse and traverse.
-     * @param \DOMDocument $document
-     *   The original, unmodified DOMDocument.
      */
-    protected function renderTwigComponents(&$element, $document)
+    protected function renderTwigComponents(&$element)
     {
         foreach ($this->tagNames as $tag_name) {
             /** @var \DOMElement $tag */
@@ -77,14 +107,13 @@ class Renderer
                 $render = $this->twigEnvironment->render($tag_name, $context);
                 $inliner = new CSSInliner();
                 $render = $inliner->convert($render);
-                $this->preserveChildNodes($tag, $document);
-                $newContent = $document->createDocumentFragment();
-                $newContent->appendXML($render);
-                $this->renderSlots($newContent, $tag, $document);
+                $this->preserveChildNodes($tag);
+                $original_tag = $tag->cloneNode(true);
                 $tag->textContent = '';
-                $tag->appendChild($newContent);
+                $this->appendHTML($render, $tag);
+                $this->renderSlots($tag, $original_tag);
                 $tag->setAttribute('data-ssr', 'true');
-                $this->renderTwigComponents($tag, $document);
+                $this->renderTwigComponents($tag);
             }
         }
     }
@@ -92,25 +121,24 @@ class Renderer
     /**
      * Replaces slots form a rendered template with existing content.
      *
-     * @param \DOMDocumentFragment &$newContent
-     *   The rendered Twig template as a document fragment.
-     * @param \DOMElement &$tag
-     *   The unmodified DOMElement tag.
-     * @param \DOMDocument $document
-     *   The DOMDocument.
+     * @param \DOMNode &$node
+     *   The rendered Twig template as a DOMNode.
+     * @param \DOMNode &$original_node
+     *   The unmodified DOMNode.
      */
-    protected function renderSlots($newContent, $tag, $document) {
-        $xpath = new \DOMXPath($document);
-        $oldContent = $tag->cloneNode(true);
+    protected function renderSlots($node, $original_node)
+    {
+        $xpath = new \DOMXPath($original_node->ownerDocument);
+        $oldContent = $original_node->cloneNode(true);
         $default_slot = false;
         /** @var \DOMNode $slot */
-        foreach ($xpath->query('.//slot', $newContent) as $slot) {
+        foreach ($xpath->query('.//slot', $node) as $slot) {
             if (!isset($slot->attributes['name'])) {
                 $default_slot = $default_slot ?: $slot;
                 continue;
             }
             $expression = './/*[@slot="' . $slot->attributes['name']->value . '"]';
-            $replacement = $document->createDocumentFragment();
+            $replacement = $original_node->ownerDocument->createDocumentFragment();
             $matches = $xpath->query($expression, $oldContent);
             /** @var \DOMNode $match */
             foreach ($matches as $match) {
@@ -118,38 +146,37 @@ class Renderer
                 $match->parentNode->removeChild($match);
             }
             if (!$replacement->hasChildNodes()) {
-                $replacement->appendXML($this->getChildHTML($slot, $document));
+                $this->appendHTML($this->getChildHTML($slot), $replacement);
             }
             $slot->parentNode->replaceChild($replacement->cloneNode(true), $slot);
         }
-        $replacement = $document->createDocumentFragment();
-        $replacement->appendXML($this->getChildHTML($oldContent, $document));
+        $replacement = $original_node->ownerDocument->createDocumentFragment();
+        $this->appendHTML($this->getChildHTML($oldContent), $replacement);
         if ($default_slot) {
             if (!$replacement->hasChildNodes()) {
-                $replacement->appendXML($this->getChildHTML($default_slot, $document));
+                $this->appendHTML($this->getChildHTML($default_slot), $replacement);
             }
             $default_slot->parentNode->replaceChild($replacement->cloneNode(true), $default_slot);
         }
-        foreach ($xpath->query('.//slot', $newContent) as $slot) {
+        foreach ($xpath->query('.//slot', $node) as $slot) {
             $slot->parentNode->removeChild($slot);
         }
     }
 
     /**
-     * Ensures that child nodes of a component are preserved in an attribute.
+     * Gets the HTML content of a DOMNode's children.
      *
      * @param \DOMNode $node
      *   The DOMNode
-     * @param \DOMDocument $document
-     *   The DOMDocument.
      *
      * @return string
      *   The HTML of all the child nodes.
      */
-    protected function getChildHTML($node, $document) {
+    protected function getChildHTML($node)
+    {
         $html = '';
         foreach ($node->childNodes as $child) {
-            $html .= $document->saveHTML($child);
+            $html .= $node->ownerDocument->saveHTML($child);
         }
         return $html;
     }
@@ -159,12 +186,11 @@ class Renderer
      *
      * @param \DOMElement &$tag
      *   The DOMElement tag.
-     * @param \DOMDocument $document
-     *   The DOMDocument.
      */
-    protected function preserveChildNodes(&$tag, $document) {
+    protected function preserveChildNodes(&$tag)
+    {
         if ($tag->hasChildNodes()) {
-            $original_content = $this->getChildHTML($tag, $document);
+            $original_content = $this->getChildHTML($tag);
             $tag->setAttribute('data-ssr-content', json_encode($original_content));
         }
     }
