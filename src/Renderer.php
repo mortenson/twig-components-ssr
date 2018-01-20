@@ -2,6 +2,8 @@
 
 namespace TwigComponentsSSR;
 
+use Sabberworm\CSS\Parser as CSSParser;
+
 /**
  * Server side renders Twig Components in an HTML string.
  */
@@ -18,6 +20,12 @@ class Renderer
      *   An array of tag names supported by this class.
      */
     protected $tagNames;
+
+    /**
+     * @var string[]
+     *   An array of CSS styles keyed by tag name.
+     */
+    protected $styleRegistry;
 
     /**
      * TwigComponentsSSR constructor.
@@ -37,6 +45,7 @@ class Renderer
             $this->twigEnvironment = $environment;
         }
         $this->tagNames = array_keys($templates);
+        $this->styleRegistry = [];
     }
 
     /**
@@ -51,6 +60,7 @@ class Renderer
     {
         $document = $this->createDocument($html);
         $this->renderTwigComponents($document);
+        $this->appendComputedStyles($document);
         return trim($document->saveHTML());
     }
 
@@ -90,6 +100,29 @@ class Renderer
     }
 
     /**
+     * Prepends computed component styles to a document.
+     *
+     * @param \DOMDocument $document
+     *   The DOMDocument.
+     */
+    protected function appendComputedStyles($document)
+    {
+        $css = implode("\n", $this->styleRegistry);
+        if (!empty($css)) {
+            $styles = $document->createElement('style', $css);
+            $head = $document->getElementsByTagName('head');
+            $body = $document->getElementsByTagName('body');
+            if ($head->length) {
+                $head->item(0)->appendChild($styles);
+            } elseif ($body->length) {
+                $document->insertBefore($styles, $body->item(0)->firstChild);
+            } else {
+                $document->insertBefore($styles, $document->firstChild);
+            }
+        }
+    }
+
+    /**
      * Renders Twig Components recursively based on a DOM entrypoint.
      *
      * @param \DOMElement|\DOMDocument &$element
@@ -105,16 +138,47 @@ class Renderer
                 }
                 $context = $this->getContext($tag);
                 $render = $this->twigEnvironment->render($tag_name, $context);
-                $inliner = new CSSInliner();
-                $render = $inliner->convert($render);
                 $this->preserveChildNodes($tag);
                 $original_tag = $tag->cloneNode(true);
                 $tag->textContent = '';
                 $this->appendHTML($render, $tag);
                 $this->renderSlots($tag, $original_tag);
+                $this->renderStyles($tag);
                 $tag->setAttribute('data-ssr', 'true');
                 $this->renderTwigComponents($tag);
             }
+        }
+    }
+
+    /**
+     * Removes inline style tags, storing their rules for later rendering.
+     *
+     * @param \DOMElement &$node
+     *   The rendered Twig template as a DOMNode.
+     */
+    protected function renderStyles($node)
+    {
+        $styles = '';
+        /** @var \DOMNode $style */
+        foreach ($node->getElementsByTagName('style') as $style) {
+            $parser = new CSSParser($style->textContent);
+            $css = $parser->parse();
+            /** @var \Sabberworm\CSS\RuleSet\DeclarationBlock $block */
+            foreach ($css->getAllDeclarationBlocks() as $block) {
+                /** @var \Sabberworm\CSS\Rule\Rule $rule */
+                foreach ($block->getRules() as $rule) {
+                    $rule->setIsImportant(true);
+                }
+                /** @var \Sabberworm\CSS\Property\Selector $selector */
+                foreach ($block->getSelectors() as $selector) {
+                    $selector->setSelector($node->tagName . ' ' . $selector->getSelector());
+                }
+            }
+            $styles .= $css->render();
+            $style->parentNode->removeChild($style);
+        }
+        if (!empty($styles) && !isset($this->styleRegistry[$node->tagName])) {
+            $this->styleRegistry[$node->tagName] = $styles;
         }
     }
 

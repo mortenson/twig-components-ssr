@@ -39,7 +39,7 @@ class RendererTest extends TestCase
                     'my-component' => '<style>p { color: blue; }</style>Hello <p>{{ name }}</p>!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" data-ssr="true">Hello <p style="color: blue;">World</p>!</my-component>',
+                '<style>my-component p {color: blue !important;}</style><my-component name="World" data-ssr="true">Hello <p>World</p>!</my-component>',
             ],
             'slot' => [
                 [

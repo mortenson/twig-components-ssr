@@ -48,11 +48,43 @@ Note that if you're using [generator-twig-components-webpack](https://github.com
 a `templates.json` file is included in the `dist` directory and can be used
 directly with the renderer.
 
-# Inlining of styles
+# Handling of style tags
 
 If a Twig Component template contains a `<style>` tag, which is a common way to
-have encapsulated styles using Shadow DOM, the renderer will inline CSS after
-the template is processed.
+have encapsulated styles using Shadow DOM, the renderer will store the contents
+of the tag and remove it from the component.
+
+When all component rendering is complete, those stored styles will have the tag
+name prepended to them, and all rules will become `!important`;
+
+This method does not guarantee Shadow DOM-like style encapsulation, but is a
+good start.
+
+# Support for slots
+
+Default and named slots are fully supported by this renderer.
+
+If a component named `my-component` uses a template like:
+
+```
+{{ prefix }} <slot />
+```
+
+rendering this:
+
+```
+<my-component prefix="Hello">World!</my-component>
+```
+
+would result in:
+
+```
+<my-component prefix="Hello" data-ssr-content="World!">Hello World!</my-component>
+```
+
+The `data-ssr-content` attribute contains the original, untouched content of
+the element. The base component will use this original content before attaching
+the shadow root to ensure proper future rendering.
 
 # Running tests
 
