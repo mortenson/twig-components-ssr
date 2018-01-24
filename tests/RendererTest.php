@@ -24,7 +24,7 @@ class RendererTest extends TestCase
                     'my-component' => 'Hello {{ name }}!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" data-ssr="true">Hello World!</my-component>',
+                '<my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello World!</my-component>',
             ],
             'nested' => [
                 [
@@ -32,14 +32,14 @@ class RendererTest extends TestCase
                     'my-name' => '<b>World</b>'
                 ],
                 '<my-component name="World"></my-component>',
-                '<my-component name="World" data-ssr="true">Hello <my-name name="World" data-ssr="true"><b>World</b></my-name>!</my-component>',
+                '<my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello <my-name name="World" data-ssr-content=\'""\' data-ssr="true"><b>World</b></my-name>!</my-component>',
             ],
             'styles' => [
                 [
                     'my-component' => '<style>p { color: blue; }</style>Hello <p>{{ name }}</p>!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<style>my-component p {color: blue !important;}</style><my-component name="World" data-ssr="true">Hello <p>World</p>!</my-component>',
+                '<style>my-component p {color: blue !important;}</style><my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello <p>World</p>!</my-component>',
             ],
             'slot' => [
                 [
@@ -53,7 +53,7 @@ class RendererTest extends TestCase
                     'my-component' => '<slot>placeholder</slot>'
                 ],
                 '<my-component></my-component>',
-                '<my-component data-ssr="true">placeholder</my-component>',
+                '<my-component data-ssr-content=\'""\' data-ssr="true">placeholder</my-component>',
             ],
             'slot_named' => [
                 [

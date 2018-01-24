@@ -253,10 +253,8 @@ class Renderer
      */
     protected function preserveChildNodes(&$tag)
     {
-        if ($tag->hasChildNodes()) {
-            $original_content = $this->getChildHTML($tag);
-            $tag->setAttribute('data-ssr-content', json_encode($original_content));
-        }
+        $original_content = $this->getChildHTML($tag);
+        $tag->setAttribute('data-ssr-content', json_encode($original_content));
     }
 
     /**
