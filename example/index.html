@@ -1,0 +1,41 @@
+<html dir="ltr" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
+    <title>Twig Components SSR Example</title>
+    <script>
+      function load () {
+        var script = document.createElement('script');
+        script.src = 'https://unpkg.com/twig-components-example@0.0.3/dist/components.bundled.js';
+        document.head.appendChild(script);
+        replaceme.innerText = 'Web components loaded from ' + script.src;
+      }
+    </script>
+    <style>
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+        padding: 2rem;
+      }
+      tce-hero {
+        display: block;
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Server Side Rendered Twig Components!</h1>
+    <p>
+      The heroes below are custom elements rendered entirely by PHP, without
+      v8js or Node!
+    </p>
+    <p id="replaceme">
+      Normally you would progressively enhance the page by loading Javascript
+      as soon as possible, but because this is a demo you can just
+      <a href="javascript:load()">click here</a> to load the Web Component stuff.
+    </p>
+    <tce-hero id="styled-hero" src="./assets/hero-1.jpg" text="Oh Buoy" subtext="Set sail for pun" callout-text="Engage" callout-href="#" align="middle"></tce-hero>
+    <tce-hero text="In a pickle?" subtext="Earn your chops today" callout-href="#" align="right">
+      <video autoplay loop src="./assets/hero-2.webm" slot="media" style="max-width: 100%;"></video>
+    </tce-hero>
+  </body>
+</html>

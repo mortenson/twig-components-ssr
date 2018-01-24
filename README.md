@@ -102,6 +102,12 @@ This project uses the PSR2 coding standard. To check for violations, run:
 phpcs --standard=PSR2 src/*
 ```
 
+# Example page
+
+A super light-weight example is available at /example. You can check it out
+by running `cd example && php -S 127.0.0.1:12345`, then visiting
+`http://127.0.0.1:12345` in your browser.
+
 # Todo
 
 - [x] Support the `<slot />` element and named slots
