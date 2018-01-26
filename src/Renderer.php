@@ -23,7 +23,7 @@ class Renderer
 
     /**
      * @var string[]
-     *   An array of CSS styles keyed by tag name.
+     *   An array of CSS styles keyed by tag name for the current render.
      */
     protected $styleRegistry;
 
@@ -58,10 +58,16 @@ class Renderer
      */
     public function render($html)
     {
+        $this->styleRegistry = [];
         $document = $this->createDocument($html);
+        $xpath = new \DOMXPath($document);
+        /** @var \DOMElement $node */
+        foreach ($xpath->query('//*[@data-ssr-content]') as $node) {
+            $node->removeAttribute('data-ssr-content');
+        }
         $this->renderTwigComponents($document);
         $this->appendComputedStyles($document);
-        return trim($document->saveHTML());
+        return trim($this->getChildHTML($document->firstChild));
     }
 
     /**
@@ -74,6 +80,7 @@ class Renderer
      */
     protected function createDocument($html)
     {
+        $html = '<wrapper>' . $html . '</wrapper>';
         $document = new \DOMDocument();
         $document->formatOutput = false;
         $document->strictErrorChecking = false;
@@ -91,7 +98,6 @@ class Renderer
      */
     protected function appendHTML($html, &$node)
     {
-        $html = '<wrapper>' . $html . '</wrapper>';
         $tempDocument = $this->createDocument($html);
         /** @var \DOMNode $child */
         foreach ($tempDocument->firstChild->childNodes as $child) {
@@ -117,7 +123,7 @@ class Renderer
             } elseif ($body->length) {
                 $document->insertBefore($styles, $body->item(0)->firstChild);
             } else {
-                $document->insertBefore($styles, $document->firstChild);
+                $document->firstChild->insertBefore($styles, $document->firstChild->firstChild);
             }
         }
     }
