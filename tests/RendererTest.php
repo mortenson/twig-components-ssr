@@ -17,6 +17,7 @@ class RendererTest extends TestCase
         $tag_templates = array_combine(array_keys($templates), array_keys($templates));
         $renderer = new Renderer($tag_templates, $environment);
         $this->assertSame($renderer->render($html), $expected);
+        $this->assertSame(array_values($renderer->getRenderedTags()), array_keys($templates));
     }
 
     public function rendererDataProvider()

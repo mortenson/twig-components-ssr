@@ -28,6 +28,12 @@ class Renderer
     protected $styleRegistry;
 
     /**
+     * @var string[]
+     *   An array tags names that were rendered in the last ::render call.
+     */
+    protected $renderedTags;
+
+    /**
      * TwigComponentsSSR constructor.
      *
      * @param string[] $tag_templates
@@ -40,6 +46,7 @@ class Renderer
         $this->twigEnvironment = $environment;
         $this->tagTemplates = $tag_templates;
         $this->styleRegistry = [];
+        $this->renderedTags = [];
     }
 
     /**
@@ -53,6 +60,7 @@ class Renderer
     public function render($html)
     {
         $this->styleRegistry = [];
+        $this->renderedTags = [];
         $document = $this->createDocument($html);
         $xpath = new \DOMXPath($document);
         /** @var \DOMElement $node */
@@ -62,6 +70,17 @@ class Renderer
         $this->renderTwigComponents($document);
         $this->appendComputedStyles($document);
         return trim($this->getChildHTML($document->firstChild));
+    }
+
+    /**
+     * Returns an array tags names that were rendered in the last render call.
+     *
+     * @return string[]
+     *   An array tags names.
+     */
+    public function getRenderedTags()
+    {
+        return $this->renderedTags;
     }
 
     /**
@@ -133,6 +152,7 @@ class Renderer
         foreach ($this->tagTemplates as $tag_name => $template_name) {
             /** @var \DOMElement $tag */
             foreach ($element->getElementsByTagName($tag_name) as $tag) {
+                $this->renderedTags[$tag_name] = $tag_name;
                 if ($tag->hasAttribute('data-ssr')) {
                     continue;
                 }

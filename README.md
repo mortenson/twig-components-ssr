@@ -90,6 +90,13 @@ The `data-ssr-content` attribute contains the original, untouched content of
 the element. The base component will use this original content before attaching
 the shadow root to ensure proper future rendering.
 
+# Determining what tags were rendered
+
+During the render process a list of tag names that were present in the provided
+HTML are collected and stored. To access them, call the `getRenderedTags()`
+method of your `TwigComponentsSSR\Renderer` object. This is useful for only
+adding Javascript for components that are actually present on the page.
+
 # Running tests
 
 Tests for this project are written using PHPUnit. To execute tests, run:
