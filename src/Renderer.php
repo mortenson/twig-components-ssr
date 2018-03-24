@@ -17,9 +17,9 @@ class Renderer
 
     /**
      * @var string[]
-     *   An array of tag names supported by this class.
+     *   An associative array mapping tag names to template names.
      */
-    protected $tagNames;
+    protected $tagTemplates;
 
     /**
      * @var string[]
@@ -30,21 +30,15 @@ class Renderer
     /**
      * TwigComponentsSSR constructor.
      *
-     * @param array $templates
-     *   An array of Twig Templates keyed by tag name.
+     * @param string[] $tag_templates
+     *   An associative array mapping tag names to template names.
      * @param \Twig_Environment $environment
-     *   (optional) An optional Twig environment.
+     *   A Twig environment, with templates that map to component names.
      */
-    public function __construct($templates = [], \Twig_Environment $environment = null)
+    public function __construct($tag_templates, \Twig_Environment $environment)
     {
-        $loader = new \Twig_Loader_Array($templates);
-        if (!$environment) {
-            $this->twigEnvironment = new \Twig_Environment($loader);
-        } else {
-            $environment->setLoader($loader);
-            $this->twigEnvironment = $environment;
-        }
-        $this->tagNames = array_keys($templates);
+        $this->twigEnvironment = $environment;
+        $this->tagTemplates = $tag_templates;
         $this->styleRegistry = [];
     }
 
@@ -136,14 +130,14 @@ class Renderer
      */
     protected function renderTwigComponents(&$element)
     {
-        foreach ($this->tagNames as $tag_name) {
+        foreach ($this->tagTemplates as $tag_name => $template_name) {
             /** @var \DOMElement $tag */
             foreach ($element->getElementsByTagName($tag_name) as $tag) {
                 if ($tag->hasAttribute('data-ssr')) {
                     continue;
                 }
                 $context = $this->getContext($tag);
-                $render = $this->twigEnvironment->render($tag_name, $context);
+                $render = $this->twigEnvironment->render($template_name, $context);
                 $this->preserveChildNodes($tag);
                 $original_tag = $tag->cloneNode(true);
                 $tag->textContent = '';

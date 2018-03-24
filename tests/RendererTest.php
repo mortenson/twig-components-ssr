@@ -12,7 +12,10 @@ class RendererTest extends TestCase
      */
     public function testRenderer($templates, $html, $expected)
     {
-        $renderer = new Renderer($templates);
+        $loader = new \Twig_Loader_Array($templates);
+        $environment = new \Twig_Environment($loader);
+        $tag_templates = array_combine(array_keys($templates), array_keys($templates));
+        $renderer = new Renderer($tag_templates, $environment);
         $this->assertSame($renderer->render($html), $expected);
     }
 
@@ -79,4 +82,18 @@ class RendererTest extends TestCase
             ],
         ];
     }
+
+  public function testFileLoader()
+  {
+    $loader = new \Twig_Loader_Filesystem([
+      'templates/components',
+      'templates/components/my-component',
+    ], __DIR__);
+    $environment = new \Twig_Environment($loader);
+    $tag_templates = [
+      'my-component' => 'my-component.twig',
+    ];
+    $renderer = new Renderer($tag_templates, $environment);
+    $this->assertSame($renderer->render('<my-component name="World"></my-component>'), '<my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello World!</my-component>');
+  }
 }

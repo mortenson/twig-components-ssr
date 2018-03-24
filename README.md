@@ -20,15 +20,19 @@ composer require mortenson/twig-components-ssr
 
 # Usage
 
-The renderer takes an array of Twig templates keyed by custom element (tag)
-name, and then renders Twig Components in an HTML string.
+The renderer takes an array of Twig template names keyed by custom element
+name, and a Twig Environment that can properly render those templates.
 
-Here's a basic example:
+Here's a basic example with the array loader:
 
 ```php
 $templates = [
-  'my-component' => 'Hello {{ name }}!',
+  'my-component.twig' => 'Hello {{ name }}!',
 ];
+$loader = new \Twig_Loader_Array($templates);
+$environment = new \Twig_Environment($loader);
+$tag_templates = ['my-component' => 'my-component.twig'];
+$renderer = new Renderer($tag_templates, $environment);
 $html = '<my-component name="World"></my-component>';
 $renderer = new TwigComponentsSSR\Renderer($templates);
 $rendered_html = $renderer->render($html);
