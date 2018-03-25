@@ -16,7 +16,7 @@ class RendererTest extends TestCase
         $environment = new \Twig_Environment($loader);
         $tag_templates = array_combine(array_keys($templates), array_keys($templates));
         $renderer = new Renderer($tag_templates, $environment);
-        $this->assertSame($renderer->render($html), $expected);
+        $this->assertSame($renderer->render('<wrapper>' . $html . '</wrapper>'), '<wrapper>' . $expected . '</wrapper>');
         $this->assertSame(array_values($renderer->getRenderedTags()), array_keys($templates));
     }
 
@@ -43,8 +43,7 @@ class RendererTest extends TestCase
                     'my-component' => '<style>p { color: blue; }</style>Hello <p>{{ name }}</p>!'
                 ],
                 '<my-component name="World"></my-component>',
-                '<style>my-component p {color: blue !important;}</style>
-<my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello <p>World</p>!</my-component>',
+                '<style>my-component p {color: blue !important;}</style><my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello <p>World</p>!</my-component>',
             ],
             'slot' => [
                 [
@@ -72,7 +71,7 @@ class RendererTest extends TestCase
                     'my-component' => '<slot></slot><slot name="suffix"></slot><slot></slot><slot name="punctuation">!</slot>'
                 ],
                 '<my-component><div slot="suffix">, ya animal</div>Hello<p>World</p></my-component>',
-                '<my-component data-ssr-content=\'"&lt;div slot=\"suffix\"&gt;, ya animal&lt;\/div&gt;Hello&lt;p&gt;World&lt;\/p&gt;"\' data-ssr="true">Hello<p>World</p>' . "\n" . '<div slot="suffix">, ya animal</div>!</my-component>',
+                '<my-component data-ssr-content=\'"&lt;div slot=\"suffix\"&gt;, ya animal&lt;\/div&gt;Hello&lt;p&gt;World&lt;\/p&gt;"\' data-ssr="true">Hello<p>World</p><div slot="suffix">, ya animal</div>!</my-component>',
             ],
             'replace_existing_ssr_content' => [
                 [

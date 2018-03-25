@@ -61,7 +61,7 @@ class Renderer
     {
         $this->styleRegistry = [];
         $this->renderedTags = [];
-        $document = $this->createDocument($html);
+        $document = $this->createDocument($html, false);
         $xpath = new \DOMXPath($document);
         /** @var \DOMElement $node */
         foreach ($xpath->query('//*[@data-ssr-content]') as $node) {
@@ -69,7 +69,7 @@ class Renderer
         }
         $this->renderTwigComponents($document);
         $this->appendComputedStyles($document);
-        return trim($this->getChildHTML($document->firstChild));
+        return trim($document->saveHTML());
     }
 
     /**
@@ -88,12 +88,16 @@ class Renderer
      *
      * @param string $html
      *   HTML to append to the DOMNode.
+     * @param boolean $wrapper
+     *   Whether or not to wrap the HTML string. Defaults to TRUE.
      * @return \DOMDocument
      *   The DOMDocument.
      */
-    protected function createDocument($html)
+    protected function createDocument($html, $wrapper = true)
     {
-        $html = '<wrapper>' . $html . '</wrapper>';
+        if ($wrapper) {
+            $html = '<wrapper>' . $html . '</wrapper>';
+        }
         $document = new \DOMDocument();
         $document->formatOutput = false;
         $document->strictErrorChecking = false;
