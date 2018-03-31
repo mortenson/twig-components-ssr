@@ -80,6 +80,13 @@ class RendererTest extends TestCase
                 '<my-component name="World" data-ssr-content="Replace me"></my-component><x-unknown data-ssr-content="Unsafe"></x-unknown>',
                 '<my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello World!</my-component><x-unknown></x-unknown>',
             ],
+            'style_host' => [
+                [
+                    'my-component' => '<style>:host { display: block; } :host(.foo) { display: none; }</style>Hello {{ name }}!'
+                ],
+                '<my-component name="World"></my-component>',
+                '<style>my-component {display: block !important;}' . "\n" . 'my-component.foo {display: none !important;}</style><my-component name="World" data-ssr-content=\'""\' data-ssr="true">Hello World!</my-component>',
+            ],
         ];
     }
 

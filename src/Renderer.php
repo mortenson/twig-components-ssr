@@ -195,7 +195,14 @@ class Renderer
                 }
                 /** @var \Sabberworm\CSS\Property\Selector $selector */
                 foreach ($block->getSelectors() as $selector) {
-                    $selector->setSelector($node->tagName . ' ' . $selector->getSelector());
+                    $selector_string = $selector->getSelector();
+                    if (preg_match('/^:host/', $selector_string) !== 0) {
+                        $new_selector = preg_replace('/^:host\(([^)]+)\)/', $node->tagName . '$1', $selector_string);
+                        $new_selector = preg_replace('/^:host/', $node->tagName, $new_selector);
+                    } else {
+                        $new_selector = $node->tagName . ' ' . $selector_string;
+                    }
+                    $selector->setSelector($new_selector);
                 }
             }
             $styles .= $css->render();

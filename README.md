@@ -64,6 +64,18 @@ name prepended to them, and all rules will become `!important`;
 This method does not guarantee Shadow DOM-like style encapsulation, but is a
 good start.
 
+## Support for :host
+
+The Shadow DOM spec has support for some new CSS selectors, namely `:host`,
+`:host-context`, and the now removed `::shadow` and `/deep/`.
+
+This project only supports `:host`, and does so by simply replacing `:host`
+with the name of the tag.
+
+Note that because of parsing constraints, using the `:host(<selector>)` syntax
+only supports one sub-selector. So `:host(.foo)` will render fine, but 
+`:host(.foo,.bar)` will not work. Use `:host(.foo),:host(.bar)` instead!
+
 # Support for slots
 
 Default and named slots are fully supported by this renderer.
