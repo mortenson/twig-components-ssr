@@ -41,16 +41,12 @@ $rendered_html = $renderer->render($html);
 At this point, `$rendered_html` should contain:
 
 ```html
-<my-component name="World" data-ssr="true">Hello World!</my-component>
+<my-component name="World" data-ssr-content='""' data-ssr="true">Hello World!</my-component>
 ```
 
 When this HTML is displayed in a browser, and the Javascript for the Twig
 Component is loaded, the server side rendered content should be hidden as soon
 as the Shadow DOM root is attached.
-
-Note that if you're using [generator-twig-components-webpack](https://github.com/mortenson/generator-twig-components-webpack),
-a `templates.json` file is included in the `dist` directory and can be used
-directly with the renderer.
 
 # Handling of style tags
 
